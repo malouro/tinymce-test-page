@@ -82,7 +82,7 @@
             }
           }
 
-          s += '<line x1="0" y1="' + curY + '" x2="100%" y2="' + curY + '" stroke-width="1" class="pageRulerBreak" />'
+          s += `<line x1="0" y1="${curY}" x2="100%" y2="${curY}" stroke-width="1" class="pageRulerBreak" />`
 
           /** Weird ugly line rulers across the whole page, not just on page breaks */
           // s +=
@@ -93,7 +93,7 @@
           //   '" width="37.79527559055118" height="37.79527559055118" patternUnits="userSpaceOnUse">'
           // s += '<line x1="0" y1="0" x2="100%" y2="0" stroke-width="1" stroke="black"/>'
           // s += "</pattern>"
-          s += '<rect x="0" y="' + curY + '" width="100%" height="' + blockH + '" fill="url(#ruler' + i + ')" />'
+          s += `<rect x="0" y="${curY}" width="100%" height="${blockH}" fill="url(#ruler${i})" />`
 
           // Writing a page number
           s += `<text x="10" y="${curY + 19 + 5}" class="pageNumber" fill="#000">Page ${i + 1} of ${pages + 1}</text>`;
