@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>TinyMCE Testing Page</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.tiny.cloud/1/4bqk32i7ezkqelpgxxnvsj7439kdjxzygaokl2rspwjfuozb/tinymce/8/tinymce.min.js"
+    referrerpolicy="origin" crossorigin="anonymous"></script>
+
+  <!-- CUSTOM PLUGIN -->
+  <script>
+    tinymce.PluginManager.add("pageruler", (editor, url) => {
+      var domHtml
+      var lastPageBreaks
+
+      function refreshRuler() {
+        try {
+          domHtml = $(editor.getDoc().getElementsByTagName("HTML")[0])
+          domHtml.find("head").append($("<style>" + $("tinystyle").html() + "</style>"))
+        } catch (e) {
+          return setTimeout(refreshRuler, 50)
+        }
+
+        var dpi = 96
+        var cm = dpi / 2.54
+        var a4px = cm * (29.7 - 5.7) // A4 height in px, -5.5 are my additional margins in my PDF print
+
+        // ruler begins (in px)
+        var startMargin = 4
+
+        // max size (in px) = document size + extra to be sure, idk, the height is too small for some reason
+        var imgH = domHtml.height() + a4px * 5
+
+        var pageBreakHeight = 14 // height of the pagebreak line in tinyMce
+
+        var pageBreaks = []
+        domHtml.find(".mce-pagebreak").each(function () {
+          pageBreaks[pageBreaks.length] = $(this).offset().top
+        })
+        pageBreaks.sort()
+
+        // if pageBreak is too close next page, then ignore it
+        if (lastPageBreaks == pageBreaks) {
+          return // no change
+        }
+        lastPageBreaks = pageBreaks
+
+
+        var s = ""
+        s += '<svg width="100%" height="' + imgH + '" xmlns="http://www.w3.org/2000/svg">'
+
+        s += "<style>"
+        s += `.pageNumber {
+          font-weight:bold;
+          font-size:14px;
+          font-family:monospace;
+        }`
+        s += `.pageRulerBreak {
+          stroke: rgba(0,0,0,0.6);
+          margin-top: 16px;
+          margin-bottom: 16px;
+        }`
+        s += "</style>"
+
+        var pages = Math.ceil(imgH / a4px)
+
+        var i,
+          j,
+          curY = startMargin
+
+
+        console.log(pages, pageBreaks, lastPageBreaks)
+        for (i = 0; i < pages; i++) {
+          var blockH = a4px
+
+          var isPageBreak = 0
+          for (var j = 0; j < pageBreaks.length; j++) {
+            if (pageBreaks[j] < curY + blockH) {
+              blockH = pageBreaks[j] - curY
+              isPageBreak = 1
+              pageBreaks.splice(j, 1)
+            }
+          }
+
+          s += '<line x1="0" y1="' + curY + '" x2="100%" y2="' + curY + '" stroke-width="1" class="pageRulerBreak" />'
+
+          /** Weird ugly line rulers across the whole page, not just on page breaks */
+          // s +=
+          //   '<pattern id="ruler' +
+          //   i +
+          //   '" x="0" y="' +
+          //   curY +
+          //   '" width="37.79527559055118" height="37.79527559055118" patternUnits="userSpaceOnUse">'
+          // s += '<line x1="0" y1="0" x2="100%" y2="0" stroke-width="1" stroke="black"/>'
+          // s += "</pattern>"
+          s += '<rect x="0" y="' + curY + '" width="100%" height="' + blockH + '" fill="url(#ruler' + i + ')" />'
+
+          // Writing a page number
+          s += `<text x="10" y="${curY + 19 + 5}" class="pageNumber" fill="#000">Page ${i + 1} of ${pages + 1}</text>`;
+
+          curY += blockH
+          if (isPageBreak) {
+            // s+= '<rect x="0" y="'+curY+'" width="100%" height="'+pageBreakHeight+'" fill="#FFFFFF" />';
+            curY += pageBreakHeight
+          }
+        }
+
+        s += "</svg>"
+
+        domHtml.css("background-image", 'url("data:image/svg+xml;utf8,' + encodeURIComponent(s) + '")')
+      }
+      editor.on("NodeChange", refreshRuler)
+      editor.on("init", refreshRuler)
+    })
+  </script>
+
+  <script>
+    tinymce.init({
+      selector: '#my_editor',
+      content_css: 'writer',
+      theme: 'silver',
+      plugins: [
+        // Core editing features
+        'anchor',
+        'autolink',
+        'charmap',
+        'codesample',
+        'emoticons',
+        'link',
+        'lists',
+        'media',
+        'searchreplace',
+        'table',
+        'visualblocks',
+        'wordcount',
+        // Your account includes a free trial of TinyMCE premium features
+        // Try the most popular premium features until Nov 12, 2025:
+        'checklist',
+        'mediaembed',
+        'casechange',
+        'formatpainter',
+        'pageembed',
+        'a11ychecker',
+        'tinymcespellchecker',
+        'permanentpen',
+        'powerpaste',
+        'advtable',
+        'advcode',
+        'advtemplate',
+        'ai',
+        'uploadcare',
+        'mentions',
+        'tinycomments',
+        'tableofcontents',
+        'footnotes',
+        'mergetags',
+        'autocorrect',
+        'typography',
+        'inlinecss',
+        'markdown',
+        'importword', // <-- Check THIS out!
+        'exportword', // <-- Check THIS out!
+        'exportpdf', // <-- Check THIS out!
+        // My Custom Plugin(s)
+        'pageruler'
+      ],
+      toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+      tinycomments_mode: 'embedded',
+      tinycomments_author: 'Mike Louro',
+      ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+      uploadcare_public_key: '8984f3a1675b53f72628'
+    });
+  </script>
+</head>
+
+<body>
+  <textarea id="my_editor">
+    Welcome to TinyMCE!
+  </textarea>
+</body>
+
+</html>

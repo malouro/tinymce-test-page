@@ -1,0 +1,19 @@
+{
+  "name": "tinymce-test-page",
+  "version": "1.0.0",
+  "description": "Test page for TinyMCE Editor",
+  "keywords": [
+    "tinymce"
+  ],
+  "license": "ISC",
+  "author": "Mike Louro",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.2"
+  }
+}
